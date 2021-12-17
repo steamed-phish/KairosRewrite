@@ -189,7 +189,7 @@ async def atlas(ctx):
   ]))
 
 @bot.command()
-@commands.cooldown(1, 60, commands.BucketType.user)
+@commands.cooldown(1, 20, commands.BucketType.user)
 async def travel(ctx, d1, d2=""):
   if d1+d2.lower() in ["kairos", "dk", "districtkairos"]:
     if db[str(ctx.message.author.id)]["location"] == "District Kairos":
@@ -325,7 +325,7 @@ async def next(ctx):
         await ctx.reply(embed=embed_builder(title="Nothing happened"))
 
   if location == "Metronoia":
-    if event > 2:
+    if event > 3:
       user["stats"]["health"] = 1
       await ctx.reply(embed=embed_builder(title="Danger!", description="You were attacked by a mutant, you escaped with 1 health left."))
     if event == 1:
@@ -334,6 +334,9 @@ async def next(ctx):
     if event == 2:
       user["stats"]["defence"] += 1
       await ctx.reply(embed=embed_builder(title="Danger!", description="You were attacked by a mutant, you escaped unscathed; Defence + 1."))
+    if event == 3:
+      inv_append(user_id, "Nuclear Battery", 1)
+      await ctx.reply(embed=embed_builder(title="Power", description="You found Nuclear Battery x1!"))
       
 
 @bot.command()
@@ -468,8 +471,7 @@ async def craftbook(ctx):
     description = "A craftbook for everything",
     field=[
       ["Latte", "A warm coffee drink - Milk x1, Coffee x1", False],
-      ["Metal Chunk", "Compressed scrap metal - Scrap Metal x4", False]
-
+      ["Metal Chunk", "Compressed scrap metal - Scrap Metal x4", False],
 
 
 
@@ -494,6 +496,8 @@ async def craft(ctx, qty: int, item1="", item2="", item3=""):
     await ctx.reply(embed=embed_builder(title="What are you trying to craft?"))
     return
 
+  
+
   if item == "latte":
     if "Milk" in inventory.keys() and inventory["Milk"] >= 1*qty:
       if "Coffee" in inventory and inventory["Coffee"] >= 1*qty:
@@ -513,7 +517,7 @@ async def craft(ctx, qty: int, item1="", item2="", item3=""):
     else:
       await ctx.reply(embed=embed_builder(title="Failed", description=f"Crafting {str(qty)} Latte requires Milk x{str(1*qty)} and Coffee x{str(1*qty)}!"))
 
-  if item == "metalchunk":
+  elif item == "metalchunk":
     if "Scrap Metal" in inventory.keys() and inventory["Scrap Metal"] >= 4*qty:
       if 4*qty == inventory["Scrap Metal"]:
         inv_append(user_id, 'Scrap Metal', "delete")
@@ -557,6 +561,7 @@ async def give(ctx, member: discord.Member, qty: int, item1="", item2="", item3=
     other["money"] += qty
     await ctx.reply(embed=embed_builder(title=f"You paid {member.name} {qty} credits!"))
   else:
+    
     if item.lower() == "stalebread":
       if "Stale Bread" in inventory.keys() and inventory["Stale Bread"] >= qty:
         if qty == inventory["Stale Bread"]:
@@ -654,6 +659,20 @@ async def give(ctx, member: discord.Member, qty: int, item1="", item2="", item3=
           inv_append(user_id, "Metal Chunk", -qty)
         inv_append(member_id, "Metal Chunk", qty)
         await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Metal Chunk"))
+
+      else:
+        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
+        return
+
+
+    elif item.lower() == "nuclearbattery":
+      if "Nuclear Battery" in inventory.keys() and inventory["Nuclear Battery"] >= qty:
+        if qty == inventory["Nuclear Battery"]:
+          inv_append(user_id, "Nuclear Battery", "delete")
+        else:
+          inv_append(user_id, "Nuclear Battery", -qty)
+        inv_append(member_id, "Nuclear Battery", qty)
+        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Nuclear Battery"))
 
       else:
         await ctx.reply(embed=embed_builder(title="You don't have that much!"))
