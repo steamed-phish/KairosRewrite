@@ -17,6 +17,21 @@ keep_alive()
 bot = commands.Bot(intents=intent, command_prefix = ['k.', 'kairos ', 'k ', 'k!'], case_insensitive=True)
 ddb = DiscordComponents(bot)
 
+item_id_to_full = {
+  "latte" : "Latte",
+  "metalchunk" : "Metal Chunk",
+  "nuclearbattery" : "Nuclear Battery",
+  "pebble" : "Pebble",
+  "scrapbattery" : "Scrap Battery",
+  "scrapmetal" : "Scrap Metal",
+  "stalebread" : "Stale Bread",
+  "cotton" : "Cotton",
+  "milk" : "Milk",
+  "coffee" : "Coffee"
+}
+
+
+
 def inv_append(user, item, amt):
   if amt == "delete":
     del db[user]["inventory"][item]
@@ -249,7 +264,7 @@ async def next(ctx):
     return
 
   if location == "District Kairos":
-    if event > 5:
+    if event > 4:
       await ctx.reply(embed=embed_builder(title="Nothing happened"))
     if event == 1:
       plus = random.randint(2, 4)
@@ -259,15 +274,9 @@ async def next(ctx):
       inv_append(user_id, "Pebble", 1)
       await ctx.reply(embed=embed_builder(title = "Not very useful", description="You walked around District Kairos and found Pebble x1."))
     if event == 3:
-      if random.randint(1, 233) == 1:
-        inv_append(user_id, "Jack'o Lantern", 1)
-        await ctx.reply(embed=embed_builder(title = "Jack'o Lantern!", description="You found a Jack'o Lantern x1!"))
-      else:
-        await ctx.reply(embed=embed_builder(title="Nothing happened"))
-    if event == 4:
       inv_append(user_id, "Coffee", 1)
       await ctx.reply(embed=embed_builder(title="Thanks!", description="You got a free cup of Coffee!"))
-    if event == 5:
+    if event == 4:
       inv_append(user_id, "Milk", 1)
       await ctx.reply(embed=embed_builder(title="Thanks!", description="You got a free cup of Milk!"))
 
@@ -336,7 +345,7 @@ async def next(ctx):
       await ctx.reply(embed=embed_builder(title="Danger!", description="You were attacked by a mutant, you escaped unscathed; Defence + 1."))
     if event == 3:
       inv_append(user_id, "Nuclear Battery", 1)
-      await ctx.reply(embed=embed_builder(title="Power", description="You found Nuclear Battery x1!"))
+      await ctx.reply(embed=embed_builder(title="Power!", description="You found Nuclear Battery x1!"))
       
 
 @bot.command()
@@ -479,6 +488,16 @@ async def craftbook(ctx):
     ]
   ))
 
+@bot.command()
+async def sell(ctx, qty: int, item1="", item2="", item3=""):
+  if db[str(ctx.message.author.id)]["location"] != 'District Kairos':
+    await ctx.reply(embed=embed_builder("You must be in District Kairos to sell or buy!"))
+
+  inventory = db[str(ctx.message.author.id)]["inventory"]
+  user_id = str(ctx.message.author.id)
+  item = item1+item2+item3
+  item = item.lower()
+
 
 @bot.command()
 async def craft(ctx, qty: int, item1="", item2="", item3=""):
@@ -561,126 +580,22 @@ async def give(ctx, member: discord.Member, qty: int, item1="", item2="", item3=
     other["money"] += qty
     await ctx.reply(embed=embed_builder(title=f"You paid {member.name} {qty} credits!"))
   else:
-    
-    if item.lower() == "stalebread":
-      if "Stale Bread" in inventory.keys() and inventory["Stale Bread"] >= qty:
-        if qty == inventory["Stale Bread"]:
-          inv_append(user_id, "Stale Bread", "delete")
-        else:
-          inv_append(user_id, "Stale Bread", -qty)
-        inv_append(member_id, "Stale Bread", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Stale Bread"))
-      else:
+    full_name = item_id_to_full[item]
+    if full_name in inventory.keys():
+      if inventory[full_name] < qty:
         await ctx.reply(embed=embed_builder(title="You don't have that much!"))
         return
-
-    elif item.lower() == "coffee":
-      if "Coffee" in inventory.keys() and inventory["Coffee"] >= qty:
-        if qty == inventory["Coffee"]:
-          inv_append(user_id, "Coffee", "delete")
-        else:
-          inv_append(user_id, "Coffee", -qty)
-        inv_append(member_id, "Coffee", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Coffee"))
+      if qty == inventory[full_name]:
+        inv_append(user_id, full_name, "delete")
       else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-
-    elif item.lower() == "milk":
-      if "Milk" in inventory.keys() and inventory["Milk"] >= qty:
-        if qty == inventory["Milk"]:
-          inv_append(user_id, "Milk", "delete")
-        else:
-          inv_append(user_id, "Milk", -qty)
-        inv_append(member_id, "Milk", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Milk"))
-
-      else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-
-    elif item.lower() == "latte":
-      if "Latte" in inventory.keys() and inventory["Latte"] >= qty:
-        if qty == inventory["Latte"]:
-          inv_append(user_id, "Latte", "delete")
-        else:
-          inv_append(user_id, "Latte", -qty)
-        inv_append(member_id, "Latte", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Latte"))
-
-      else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-
-    elif item.lower() == "scrapmetal":
-      if "Scrap Metal" in inventory.keys() and inventory["Scrap Metal"] >= qty:
-        if qty == inventory["Scrap Metal"]:
-          inv_append(user_id, "Scrap Metal", "delete")
-        else:
-          inv_append(user_id, "Scrap Metal", -qty)
-        inv_append(member_id, "Scrap Metal", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Scrap Metal"))
-
-      else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-    
-    elif item.lower() == "scrapbattery":
-      if "Scrap Battery" in inventory.keys() and inventory["Scrap Battery"] >= qty:
-        if qty == inventory["Scrap Battery"]:
-          inv_append(user_id, "Scrap Battery", "delete")
-        else:
-          inv_append(user_id, "Scrap Battery", -qty)
-        inv_append(member_id, "Scrap Battery", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Scrap Battery"))
-
-      else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-    
-    elif item.lower() == "pebble":
-      if "Pebble" in inventory.keys() and inventory["Pebble"] >= qty:
-        if qty == inventory["Pebble"]:
-          inv_append(user_id, "Pebble", "delete")
-        else:
-          inv_append(user_id, "Pebble", -qty)
-        inv_append(member_id, "Pebble", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Pebble"))
-
-      else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-
-    elif item.lower() == "metalchunk":
-      if "Metal Chunk" in inventory.keys() and inventory["Metal Chunk"] >= qty:
-        if qty == inventory["Metal Chunk"]:
-          inv_append(user_id, "Metal Chunk", "delete")
-        else:
-          inv_append(user_id, "Metal Chunk", -qty)
-        inv_append(member_id, "Metal Chunk", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Metal Chunk"))
-
-      else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-
-
-    elif item.lower() == "nuclearbattery":
-      if "Nuclear Battery" in inventory.keys() and inventory["Nuclear Battery"] >= qty:
-        if qty == inventory["Nuclear Battery"]:
-          inv_append(user_id, "Nuclear Battery", "delete")
-        else:
-          inv_append(user_id, "Nuclear Battery", -qty)
-        inv_append(member_id, "Nuclear Battery", qty)
-        await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x Nuclear Battery"))
-
-      else:
-        await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-        return
-
-    else:
-      await ctx.reply(embed=embed_builder(title="Item does not exist, or is not giveable."))
+        inv_append(user_id, full_name, -qty)
+      inv_append(member_id, full_name, qty)
+      await ctx.reply(embed=embed_builder(title="Gratitude", description=f"You gave {member.name} {str(qty)}x {full_name}!"))
       return
+    else:
+      await ctx.reply("You do not have this item!")
+      return
+
 
 @bot.command()
 @commands.has_permissions(administrator=True)
