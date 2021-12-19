@@ -30,6 +30,12 @@ item_id_to_full = {
   "coffee" : "Coffee"
 }
 
+usables_effects = {
+  "latte" : ["That's good", [["defence", 1], ["speed", 1]]],
+  "stalebread" : ["Crunchy...", [["health", 2]]],
+  "coffee" : ["Bitter...", [["speed", 1]]],
+  "milk" : ["Gulp... Gulp", [["defence", 1]]]
+}
 
 
 def inv_append(user, item, amt):
@@ -387,67 +393,30 @@ async def use(ctx, qty: int, item1="", item2="", item3=""):
   inventory = db[str(ctx.message.author.id)]["inventory"]
   user = db[str(ctx.message.author.id)]
   user_id = str(ctx.message.author.id)
-  item = item1+item2+item3
+  item = (item1+item2+item3).lower()
   if qty < 1:
     await ctx.reply(embed=embed_builder(title="Quantity must be greater than one."))
     return
   if item == "":
     await ctx.reply(embed=embed_builder(title="What item are you trying to use?"))
     return
-
-  if item.lower() == "stalebread":
-    if "Stale Bread" in inventory.keys() and inventory["Stale Bread"] >= qty:
-      await ctx.reply(embed=embed_builder(title="Crunchy...", description=f"you received {str(qty*2)} health!"))
-      user["stats"]["health"] += qty*2
-      if qty == inventory["Stale Bread"]:
-        inv_append(user_id, "Stale Bread", "delete")
-      else:
-        inv_append(user_id, "Stale Bread", -qty) 
+  full_name = item_id_to_full[item]
+  if (full_name in inventory.keys()) and (inventory[full_name] >= qty) and (item in usables_effects.keys()):
+    effects = usables_effects[item]
+    reply = "you received "
+    for i in effects[1]:
+      user["stats"][i[0]] += i[1] * qty
+      reply += str(i[1] * qty) + " " + i[0] + " "
+    reply += "!"
+    await ctx.reply(embed=embed_builder(title=effects[0], description=reply))
+    if qty == inventory[full_name]:
+      inv_append(user_id, full_name, "delete")
     else:
-      await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-      return
-
-  elif item.lower() == "coffee":
-    if "Coffee" in inventory.keys() and inventory["Coffee"] >= qty:
-      await ctx.reply(embed=embed_builder(title="Bitterness", description=f"you received {str(qty)} speed!"))
-      user["stats"]["speed"] += qty
-      if qty == inventory["Coffee"]:
-        inv_append(user_id, "Coffee", "delete")
-      else:
-        inv_append(user_id, "Coffee", -qty)  
-    else:
-      await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-      return
-
-  elif item.lower() == "milk":
-    if "Milk" in inventory.keys() and inventory["Milk"] >= qty:
-      await ctx.reply(embed=embed_builder(title="Gulp.. gulp", description=f"you received {str(qty)} defence!"))
-      user["stats"]["defence"] += qty
-      if qty == inventory["Milk"]:
-        inv_append(user_id, "Milk", "delete")
-      else:
-        inv_append(user_id, "Milk", -qty)  
-    else:
-      await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-      return
-
-  elif item.lower() == "latte":
-    if "Latte" in inventory.keys() and inventory["Latte"] >= qty:
-      await ctx.reply(embed=embed_builder(title="That's good", description=f"you received {str(qty)} defence and {str(qty)} speed!"))
-      user["stats"]["defence"] += qty
-      user["stats"]["speed"] += qty      
-      if qty == inventory["Latte"]:
-        inv_append(user_id, "Latte", "delete")
-      else:
-        inv_append(user_id, "Latte", -qty)  
-    else:
-      await ctx.reply(embed=embed_builder(title="You don't have that much!"))
-      return
-
+      inv_append(user_id, full_name, -qty) 
   else:
-    await ctx.reply(embed=embed_builder(title="Item does not exist, or is unusable."))
+    await ctx.reply(embed=embed_builder(title="You don't have that much, or item isn't usable!"))
     return
-  
+
 @bot.command(aliases = ["dep"])
 async def deposit(ctx, amt: int):
   if amt < 0:
